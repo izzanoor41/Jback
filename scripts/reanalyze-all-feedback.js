@@ -7,14 +7,12 @@
 
 const { PrismaClient } = require('@prisma/client');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const OpenAI = require('openai');
 
 // Load env
 require('dotenv').config();
 
 const prisma = new PrismaClient();
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY || '');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
 
 const ANALYSIS_PROMPT = `You are a Cultural Intelligence AI expert. Analyze this customer feedback carefully.
 
@@ -42,25 +40,16 @@ Respond with ONLY valid JSON (no markdown, no explanation):
   "suggestions": "What the business should do"
 }`;
 
-async function analyzeWithOpenAI(text, rating) {
+async function analyzeWithGemini(text, rating) {
   const prompt = ANALYSIS_PROMPT
     .replace('{TEXT}', text)
     .replace('{RATING}', rating ? `Rating given: ${rating}/5 stars` : '');
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a Cultural Intelligence AI. Respond only with valid JSON, no markdown.'
-        },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.3,
-    });
-
-    const content = response.choices[0]?.message?.content || '';
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const content = response.text();
     
     // Clean and parse
     let cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
@@ -69,7 +58,7 @@ async function analyzeWithOpenAI(text, rating) {
       return JSON.parse(jsonMatch[0]);
     }
   } catch (error) {
-    console.error('OpenAI error:', error.message);
+    console.error('Gemini error:', error.message);
   }
   return null;
 }
@@ -97,7 +86,7 @@ async function reanalyzeAllFeedback() {
 
       console.log(`\n🔍 Analyzing: "${text.slice(0, 50)}..."`);
       
-      const analysis = await analyzeWithOpenAI(text, feedback.rate);
+      const analysis = await analyzeWithGemini(text, feedback.rate);
       
       if (analysis) {
         await prisma.feedback.update({

@@ -1,16 +1,14 @@
 /**
  * Cultural Intelligence AI Engine
- * Powered by Google Cloud Vertex AI (Gemini) + OpenAI Fallback
+ * Powered by Google Gemini AI
  * 
  * This module provides deep cultural analysis beyond simple translation
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import OpenAI from 'openai';
 
-// Initialize AI clients
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY || '');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' });
+// Initialize AI client
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
 
 // Cultural context database
 const CULTURAL_CONTEXTS: Record<string, {
@@ -79,7 +77,7 @@ export interface CulturalAnalysisResult {
   detectedLanguage: string;
   translatedText: string;
   sentiment: 'positive' | 'neutral' | 'negative';
-  sentimentScore: number; // -1 to 1
+  sentimentScore: number;
   culturalNotes: string | null;
   culturalContext: {
     communicationStyle: string;
@@ -129,15 +127,13 @@ Respond ONLY with a valid JSON object in this exact format:
 }`;
 
   try {
-    // Use Google Gemini for analysis
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const prompt = `${systemPrompt}\n\nFeedback text: "${text}"${rating ? `\nRating given: ${rating}/5` : ''}`;
     
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const content = response.text();
     
-    // Parse JSON response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error('No JSON found in AI response');
@@ -147,10 +143,8 @@ Respond ONLY with a valid JSON object in this exact format:
     const langCode = analysis.detected_language || 'en';
     const culturalContext = CULTURAL_CONTEXTS[langCode] || CULTURAL_CONTEXTS['en'];
     
-    // Adjust sentiment based on cultural context
     let adjustedSentiment = analysis.sentiment;
     if (langCode === 'ja' || langCode === 'id') {
-      // Japanese and Indonesian tend to understate negativity
       if (analysis.sentiment === 'neutral' && rating && rating <= 3) {
         adjustedSentiment = 'This feedback may indicate dissatisfaction despite neutral wording (cultural communication style)';
       }
@@ -175,7 +169,6 @@ Respond ONLY with a valid JSON object in this exact format:
   } catch (error) {
     console.error('Cultural analysis error:', error);
     
-    // Fallback response
     return {
       detectedLanguage: 'en',
       translatedText: text,
@@ -191,7 +184,6 @@ Respond ONLY with a valid JSON object in this exact format:
   }
 }
 
-// Generate cultural insights from aggregated feedback
 export async function generateCulturalInsights(
   feedbackItems: Array<{
     text: string;
@@ -209,7 +201,6 @@ export async function generateCulturalInsights(
     languageBreakdown[item.language] = (languageBreakdown[item.language] || 0) + 1;
   });
 
-  // Count sentiments
   const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
   feedbackItems.forEach(item => {
     if (item.sentiment in sentimentCounts) {
@@ -240,39 +231,8 @@ Respond with ONLY valid JSON (no markdown):
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"]
 }`;
 
-  // Try OpenAI first (more reliable)
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a Cultural Intelligence AI expert. Respond only with valid JSON.'
-        },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.5,
-    });
-
-    const content = response.choices[0]?.message?.content || '';
-    const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        insights: parsed.insights || [],
-        recommendations: parsed.recommendations || [],
-        languageBreakdown,
-      };
-    }
-  } catch (error) {
-    console.error('[Cultural AI] OpenAI failed:', error);
-  }
-
-  // Fallback to Gemini
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const content = response.text();
@@ -287,10 +247,9 @@ Respond with ONLY valid JSON (no markdown):
       };
     }
   } catch (error) {
-    console.error('[Cultural AI] Gemini also failed:', error);
+    console.error('[Cultural AI] Gemini failed:', error);
   }
 
-  // Generate basic insights from data
   const topLanguages = Object.entries(languageBreakdown)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
@@ -314,7 +273,6 @@ Respond with ONLY valid JSON (no markdown):
   };
 }
 
-// Get language name from code
 export function getLanguageName(code: string): string {
   const languages: Record<string, string> = {
     en: 'English',

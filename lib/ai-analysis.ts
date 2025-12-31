@@ -1,9 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import OpenAI from "openai";
 
-// Initialize AI clients
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY || '');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || '' });
+// Initialize AI client
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
 
 export interface FeedbackAnalysis {
   detected_language: string;
@@ -41,7 +39,7 @@ Respond with ONLY valid JSON (no markdown, no explanation):
 }`;
 
 /**
- * Analyze feedback using Google Gemini (primary) with OpenAI fallback
+ * Analyze feedback using Google Gemini
  */
 export async function analyzeFeedback(
   text: string, 
@@ -55,7 +53,7 @@ export async function analyzeFeedback(
     .replace('{TEXT}', text)
     .replace('{RATING}', rating ? `Rating given: ${rating}/5 stars` : '');
 
-  // Try Gemini first
+  // Try Gemini
   try {
     const result = await analyzeWithGemini(prompt);
     if (result && isValidAnalysis(result)) {
@@ -63,26 +61,15 @@ export async function analyzeFeedback(
       return result;
     }
   } catch (error) {
-    console.warn('[AI] Gemini failed, trying OpenAI:', error);
+    console.error('[AI] Gemini failed:', error);
   }
 
-  // Fallback to OpenAI
-  try {
-    const result = await analyzeWithOpenAI(prompt);
-    if (result && isValidAnalysis(result)) {
-      console.log('[AI] OpenAI analysis successful:', result.sentiment, result.detected_language);
-      return result;
-    }
-  } catch (error) {
-    console.error('[AI] OpenAI also failed:', error);
-  }
-
-  // Last resort: basic analysis
+  // Fallback: basic analysis
   return basicAnalysis(text, rating);
 }
 
 async function analyzeWithGemini(prompt: string): Promise<FeedbackAnalysis | null> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   
   const result = await model.generateContent(prompt);
   const response = await result.response;
@@ -91,35 +78,15 @@ async function analyzeWithGemini(prompt: string): Promise<FeedbackAnalysis | nul
   return parseAIResponse(content);
 }
 
-async function analyzeWithOpenAI(prompt: string): Promise<FeedbackAnalysis | null> {
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a Cultural Intelligence AI. Respond only with valid JSON, no markdown.'
-      },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.3,
-  });
-
-  const content = response.choices[0]?.message?.content || '';
-  return parseAIResponse(content);
-}
-
 function parseAIResponse(content: string): FeedbackAnalysis | null {
   try {
-    // Clean markdown code blocks
     let cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
     
-    // Find JSON object
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     
     const parsed = JSON.parse(jsonMatch[0]);
     
-    // Normalize sentiment
     if (parsed.sentiment) {
       parsed.sentiment = parsed.sentiment.toLowerCase().trim();
       if (!['positive', 'neutral', 'negative'].includes(parsed.sentiment)) {
@@ -147,37 +114,34 @@ function isValidAnalysis(analysis: FeedbackAnalysis): boolean {
  * Basic analysis fallback when AI fails
  */
 function basicAnalysis(text: string, rating?: number | null): FeedbackAnalysis {
-  // Simple language detection based on character sets
   let detected_language = 'en';
   
   if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) {
-    detected_language = 'ja'; // Japanese
+    detected_language = 'ja';
   } else if (/[\u4E00-\u9FFF]/.test(text)) {
-    detected_language = 'zh'; // Chinese
+    detected_language = 'zh';
   } else if (/[\uAC00-\uD7AF]/.test(text)) {
-    detected_language = 'ko'; // Korean
+    detected_language = 'ko';
   } else if (/[\u0600-\u06FF]/.test(text)) {
-    detected_language = 'ar'; // Arabic
+    detected_language = 'ar';
   } else if (/[\u0900-\u097F]/.test(text)) {
-    detected_language = 'hi'; // Hindi
+    detected_language = 'hi';
   } else if (/[äöüßÄÖÜ]/.test(text)) {
-    detected_language = 'de'; // German
+    detected_language = 'de';
   } else if (/[éèêëàâùûôîïç]/.test(text)) {
-    detected_language = 'fr'; // French
+    detected_language = 'fr';
   } else if (/[áéíóúñ¿¡]/.test(text)) {
-    detected_language = 'es'; // Spanish
+    detected_language = 'es';
   } else if (/[ãõçáéíóú]/.test(text)) {
-    detected_language = 'pt'; // Portuguese
+    detected_language = 'pt';
   }
 
-  // Simple sentiment based on rating
   let sentiment: 'positive' | 'neutral' | 'negative' = 'neutral';
   if (rating) {
     if (rating >= 4) sentiment = 'positive';
     else if (rating <= 2) sentiment = 'negative';
   }
 
-  // Check for obvious sentiment words
   const lowerText = text.toLowerCase();
   const positiveWords = ['great', 'excellent', 'amazing', 'love', 'best', 'awesome', 'fantastic', 'good', 'happy', 'thank', 'bagus', 'mantap', 'keren'];
   const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'poor', 'angry', 'disappointed', 'jelek', 'buruk', 'kecewa'];
@@ -211,7 +175,6 @@ export async function analyzeFeedbackBatch(
     if (analysis) {
       results.set(feedback.id, analysis);
     }
-    // Small delay to avoid rate limiting
     await new Promise(resolve => setTimeout(resolve, 300));
   }
   
