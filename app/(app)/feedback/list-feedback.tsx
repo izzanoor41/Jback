@@ -70,7 +70,29 @@ export default function ListFeedback() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const router = useRouter();
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this feedback?")) return;
+    
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/feedback/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setFeedbacks(prev => prev.filter(f => f.id !== id));
+        toast.success("Feedback deleted");
+      } else {
+        toast.error(data.message || "Failed to delete");
+      }
+    } catch (error) {
+      toast.error("Failed to delete feedback");
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   useEffect(() => {
     const getFeedbacks = async (teamId: string) => {
@@ -172,9 +194,13 @@ export default function ListFeedback() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="text-red-600" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem 
+                className="text-red-600" 
+                onClick={(e) => handleDelete(item.id, e)}
+                disabled={deleting === item.id}
+              >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                {deleting === item.id ? "Deleting..." : "Delete"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -10,13 +10,13 @@ const techStack = [
     color: "from-blue-500 to-cyan-500",
   },
   {
-    name: "Google Cloud",
-    description: "AI & Infrastructure",
+    name: "Kafka",
+    description: "Modern Flow",
     icon: "☁️",
     color: "from-red-500 to-yellow-500",
   },
   {
-    name: "OpenAI",
+    name: "Gemini AI",
     description: "Cultural Analysis",
     icon: "🧠",
     color: "from-emerald-500 to-teal-500",

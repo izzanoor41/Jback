@@ -75,8 +75,8 @@ export function CTASection() {
                   <div className="text-xs sm:text-sm text-white/70">Languages</div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-3xl font-bold">&lt;1s</div>
-                  <div className="text-xs sm:text-sm text-white/70">Processing</div>
+                  <div className="text-xl sm:text-3xl font-bold">Modern</div>
+                  <div className="text-xs sm:text-sm text-white/70">Design</div>
                 </div>
                 <div>
                   <div className="text-xl sm:text-3xl font-bold">24/7</div>

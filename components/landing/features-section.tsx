@@ -46,14 +46,7 @@ const features = [
     description: 'Ask questions about your feedback in natural language.',
     color: "pink",
     gradient: "from-pink-500 to-rose-600",
-  },
-  {
-    icon: Shield,
-    title: "Enterprise Ready",
-    description: "Team collaboration, role-based access, and secure data handling for global businesses.",
-    color: "teal",
-    gradient: "from-teal-500 to-cyan-600",
-  },
+  }
 ];
 
 export function FeaturesSection() {

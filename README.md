@@ -1,19 +1,5 @@
 # Jback - Cross-Cultural Feedback Intelligence
 
-<p align="center">
-  <img src="public/Jback.webp" alt="Jback Logo" width="120" />
-</p>
-
-<p align="center">
-  <strong>Real-time customer feedback platform powered by Confluent streaming and Google Gemini AI</strong>
-</p>
-
-<p align="center">
-  <a href="https://jback.vercel.app">Live Demo</a> •
-  <a href="https://googlecloudxconfluent.devpost.com/">Hackathon</a>
-</p>
-
----
 
 ## What is Jback?
 
@@ -33,11 +19,11 @@ Jback helps global businesses understand customer feedback across 100+ languages
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 14, React 18, TypeScript, TailwindCSS, shadcn/ui |
-| AI Engine | Google Gemini 2.0 Flash |
+| Frontend | Next.js, React, TypeScript, TailwindCSS, shadcn/ui |
+| AI Engine | Google Gemini AI |
 | Real-time Streaming | Confluent Cloud (Apache Kafka) |
 | Database | TiDB Serverless + Prisma ORM |
-| Authentication | NextAuth.js v5 |
+| Authentication | NextAuth.js |
 | Deployment | Vercel |
 
 ## Getting Started
@@ -45,7 +31,7 @@ Jback helps global businesses understand customer feedback across 100+ languages
 ### Prerequisites
 
 - Node.js 18+
-- Confluent Cloud account ([Get trial](https://confluent.cloud) with code: `CONFLUENTDEV1`)
+- Confluent Cloud account 
 - Google AI Studio API key
 - TiDB Serverless account
 
@@ -53,8 +39,8 @@ Jback helps global businesses understand customer feedback across 100+ languages
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/jback.git
-cd jback
+git clone https://github.com/izzanoor41/Jback
+cd Jback
 
 # Install dependencies
 npm install --legacy-peer-deps
@@ -123,10 +109,6 @@ jback/
 └── prisma/              # Database schema
 ```
 
-## Deployment
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/jback)
-
 Set environment variables in Vercel project settings after deployment.
 
 ## License
@@ -134,7 +116,3 @@ Set environment variables in Vercel project settings after deployment.
 MIT License
 
 ---
-
-<p align="center">
-  Built for the Confluent + Google Cloud Hackathon 2025
-</p>
