@@ -1,0 +1,204 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  username      String?         @unique
+  password      String?
+  email         String?         @unique
+  emailVerified DateTime?
+  image         String?
+  currentTeamId String?
+  accounts      Account[]
+  sessions      Session[]
+  teams         TeamMember[]
+  Authenticator Authenticator[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String  @unique
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? @db.Text
+  access_token             String? @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? @db.Text
+  session_state            String?
+  refresh_token_expires_in Int?
+  user                     User?   @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, credentialID])
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  style       Json?
+  members     TeamMember[]
+  feedbacks   Feedback[]
+  feedbackTags FeedbackTag[]
+  embeddedDocuments EmbeddedDocument[]
+  customers   Customer[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TeamMember {
+  teamId      String
+  userId      String
+  role        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  @@id([userId, teamId])
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  teamId      String
+  name        String?
+  email       String?
+  phone       String?
+  address     String?
+  feedbacks   Feedback[]
+  isVerified  Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  team Team @relation(fields: [teamId], references: [id])
+}
+
+// Enhanced Feedback model with Cultural Intelligence
+model Feedback {
+  id              String   @id @default(cuid())
+  teamId          String
+  customerId      String?
+  type            String?
+  rate            Int?
+  
+  // Original content
+  originalText    String?  @db.Text @map("description")
+  
+  // AI-processed fields (Cultural Intelligence)
+  translatedText  String?  @db.Text
+  detectedLanguage String? @default("en")
+  sentiment       String?  @default("neutral")
+  culturalNotes   String?  @db.Text
+  summary         String?  @db.Text
+  suggestions     String?  @db.Text
+  
+  // Legacy field for backward compatibility
+  aiResponse      String?  @db.Text
+  
+  // Streaming metadata
+  kafkaOffset     String?
+  kafkaPartition  Int?
+  processedAt     DateTime?
+  streamSource    String?  @default("direct")
+  
+  isResolved      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  team     Team      @relation(fields: [teamId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+}
+
+model FeedbackTag {
+  id          String   @id @default(cuid())
+  teamId      String
+  name        String
+  total       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  team Team @relation(fields: [teamId], references: [id])
+}
+
+model EmbeddedDocument {
+  id          String   @id @default(cuid())
+  teamId      String?
+  content     String @db.Text
+  metadata    Json
+  embedding   Unsupported("vector(1536)")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  team Team? @relation(fields: [teamId], references: [id])
+}
+
+// Real-time streaming events log
+model StreamEvent {
+  id          String   @id @default(cuid())
+  eventType   String   // feedback_received, feedback_processed, sentiment_analyzed
+  payload     Json
+  kafkaTopic  String?
+  kafkaOffset String?
+  status      String   @default("pending") // pending, processed, failed
+  errorMessage String? @db.Text
+  createdAt   DateTime @default(now())
+  processedAt DateTime?
+}
+
+// Cultural insights aggregation
+model CulturalInsight {
+  id              String   @id @default(cuid())
+  teamId          String
+  language        String
+  region          String?
+  insightType     String   // communication_style, sentiment_pattern, cultural_preference
+  insight         String   @db.Text
+  confidence      Float    @default(0.8)
+  feedbackCount   Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

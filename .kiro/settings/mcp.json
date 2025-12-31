@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "confluent-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@confluentinc/mcp-confluent@latest",
+        "-e",
+        ".env"
+      ],
+      "env": {
+        "BOOTSTRAP_SERVERS": "pkc-619z3.us-east1.gcp.confluent.cloud:9092",
+        "KAFKA_API_KEY": "P5PWJDKIE4JRAN7P",
+        "KAFKA_API_SECRET": "cfltVl6AqiwFYu7XTShAdc7qUYd/xaAAcMlyq+/hMxeJYRyN2sj1SMfXZjgcbsPw",
+        "CONFLUENT_CLOUD_API_KEY": "P5PWJDKIE4JRAN7P",
+        "CONFLUENT_CLOUD_API_SECRET": "cfltVl6AqiwFYu7XTShAdc7qUYd/xaAAcMlyq+/hMxeJYRyN2sj1SMfXZjgcbsPw"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "list-topics",
+        "create-topics",
+        "list-clusters",
+        "list-environments"
+      ]
+    }
+  }
+}
