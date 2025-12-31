@@ -29,6 +29,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# kiro settings (may contain secrets)
+.kiro/
+
 # vercel
 .vercel
 
