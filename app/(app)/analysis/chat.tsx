@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTeam } from "@/lib/store";
 import { useChat } from "ai/react";
 import { 
-  CornerDownLeft, 
   Bot, 
   User, 
   Sparkles,

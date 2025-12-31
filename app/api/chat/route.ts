@@ -1,15 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaTiDBCloud } from "@tidbcloud/prisma-adapter";
 import { connect } from "@tidbcloud/serverless";
+import { google } from "@ai-sdk/google";
+import { streamText } from "ai";
 
 export const maxDuration = 60;
-
-// Gemini API configuration
-const GEMINI_API_KEY = process.env.GOOGLE_CLOUD_API_KEY;
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent";
-
-// OpenAI fallback
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export async function POST(req: Request) {
   try {
@@ -40,24 +35,17 @@ export async function POST(req: Request) {
 
     const systemPrompt = buildSystemPrompt(session, team, stats, langStats, feedbackList);
 
-    // Try Gemini first, fallback to OpenAI
-    if (GEMINI_API_KEY) {
-      try {
-        return await streamGeminiResponse(messages, systemPrompt);
-      } catch (error) {
-        console.warn('Gemini failed, falling back to OpenAI:', error);
-      }
-    }
-
-    // Fallback to OpenAI
-    if (OPENAI_API_KEY) {
-      return await streamOpenAIResponse(messages, systemPrompt);
-    }
-
-    return new Response(JSON.stringify({ error: 'No AI API keys configured' }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
+    // Use Vercel AI SDK with Google Gemini
+    const result = await streamText({
+      model: google('gemini-2.0-flash'),
+      system: systemPrompt,
+      messages,
+      temperature: 0.7,
+      maxTokens: 2048,
     });
+
+    // Return streaming response compatible with useChat
+    return result.toDataStreamResponse();
 
   } catch (error: any) {
     console.error('Chat error:', error);
@@ -67,7 +55,6 @@ export async function POST(req: Request) {
     });
   }
 }
-
 
 function buildSystemPrompt(session: any, team: any, stats: any, langStats: string, feedbackList: string) {
   return `You are Jback AI - Cross-Cultural Business Intelligence Agent powered by Google Gemini and Confluent Cloud real-time streaming.
@@ -95,156 +82,6 @@ ${feedbackList || 'No feedback collected yet.'}
 - Use markdown formatting (bold, tables, bullets)
 - Be concise but informative
 - Reference specific feedback examples when analyzing`;
-}
-
-async function streamGeminiResponse(messages: any[], systemPrompt: string) {
-  // Convert messages to Gemini format
-  const contents = [];
-  
-  // Add system prompt as first user message context
-  const conversationHistory = messages.map((m: any) => 
-    `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
-  ).join('\n\n');
-
-  contents.push({
-    parts: [{ text: `${systemPrompt}\n\n---\n\nConversation:\n${conversationHistory}\n\nPlease respond to the last user message.` }]
-  });
-
-  const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}&alt=sse`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2048,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`);
-  }
-
-  // Create a TransformStream to process SSE
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      const reader = response.body?.getReader();
-      if (!reader) {
-        controller.close();
-        return;
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                if (text) {
-                  controller.enqueue(encoder.encode(text));
-                }
-              } catch (e) {
-                // Skip invalid JSON
-              }
-            }
-          }
-        }
-      } finally {
-        controller.close();
-      }
-    }
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Transfer-Encoding': 'chunked',
-    },
-  });
-}
-
-
-async function streamOpenAIResponse(messages: any[], systemPrompt: string) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      stream: true,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages,
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.status}`);
-  }
-
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      const reader = response.body?.getReader();
-      if (!reader) {
-        controller.close();
-        return;
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-              try {
-                const data = JSON.parse(line.slice(6));
-                const text = data.choices?.[0]?.delta?.content || '';
-                if (text) {
-                  controller.enqueue(encoder.encode(text));
-                }
-              } catch (e) {
-                // Skip invalid JSON
-              }
-            }
-          }
-        }
-      } finally {
-        controller.close();
-      }
-    }
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Transfer-Encoding': 'chunked',
-    },
-  });
 }
 
 async function fetchDatabaseFeedback(teamId?: string) {
