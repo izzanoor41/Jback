@@ -1,278 +1,140 @@
-# Jback - Real-Time Cultural Intelligence Platform
+# Jback - Cross-Cultural Feedback Intelligence
 
 <p align="center">
   <img src="public/Jback.webp" alt="Jback Logo" width="120" />
 </p>
 
 <p align="center">
-  <strong>AI-Powered Feedback Intelligence with Real-Time Streaming</strong>
+  <strong>Real-time customer feedback platform powered by Confluent streaming and Google Gemini AI</strong>
 </p>
 
 <p align="center">
-  Built for the <a href="https://googlecloudxconfluent.devpost.com/">Confluent + Google Cloud Hackathon</a>
+  <a href="https://jback.vercel.app">Live Demo</a> •
+  <a href="https://googlecloudxconfluent.devpost.com/">Hackathon</a>
 </p>
 
 ---
 
-[Jback](https://jback.vercel.app) is a real-time cultural intelligence platform that helps businesses collect, analyze, and act on customer feedback from around the world. Powered by **Confluent Cloud** for real-time data streaming and **Google Gemini** for AI analysis, Jback goes beyond simple translation to understand cultural context, communication styles, and regional preferences.
+## What is Jback?
 
-## ✨ Features
+Jback helps global businesses understand customer feedback across 100+ languages with cultural intelligence. A 5-star review in Japan might indicate dissatisfaction (cultural politeness), while direct German criticism could be constructive feedback. Jback bridges this gap using real-time streaming and AI.
 
-- **🌍 Multi-Language Support**: Collect feedback in 100+ languages with automatic detection and translation
-- **🧠 Cultural Intelligence**: AI-powered analysis that understands cultural context and communication styles
-- **⚡ Real-Time Streaming**: Confluent Cloud (Apache Kafka) for instant feedback processing
-- **📊 Smart Dashboard**: Visualize sentiment trends, language distribution, and cultural insights
-- **💬 AI Chat Assistant**: Interactive analysis powered by Google Gemini with real-time data context
-- **🎨 Customizable Widgets**: Embed feedback collection forms with your brand styling
-- **🔗 Easy Integration**: Single line of code, direct links, or QR codes
+## Features
 
-## 🛠️ Tech Stack
+- **Multi-Language Support** - Collect feedback in 100+ languages with automatic detection and translation
+- **Cultural Intelligence** - AI analysis that understands cultural context and communication styles
+- **Real-Time Streaming** - Confluent Cloud (Apache Kafka) for instant feedback processing
+- **Smart Dashboard** - Visualize sentiment trends, language distribution, and cultural insights
+- **AI Chat Assistant** - Interactive analysis powered by Google Gemini with real-time data context
+- **Customizable Widgets** - Embed feedback forms with your brand styling
+- **Easy Integration** - Single script tag, direct links, or QR codes
 
-### Frontend
-- **Next.js 14** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **shadcn/ui** - Beautiful UI components
-- **Zustand** - State management
+## Tech Stack
 
-### Backend & AI
-- **Google Gemini 1.5 Flash** - Primary AI for cultural analysis
-- **OpenAI GPT** - Fallback AI provider
-- **Confluent Cloud** - Real-time data streaming (Apache Kafka)
-- **TiDB Serverless** - MySQL-compatible database with vector search
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 14, React 18, TypeScript, TailwindCSS, shadcn/ui |
+| AI Engine | Google Gemini 2.0 Flash |
+| Real-time Streaming | Confluent Cloud (Apache Kafka) |
+| Database | TiDB Serverless + Prisma ORM |
+| Authentication | NextAuth.js v5 |
+| Deployment | Vercel |
 
-### Authentication & Security
-- **NextAuth.js v5** - Secure authentication
-- **Prisma ORM** - Type-safe database access
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm or yarn
-- Confluent Cloud account ([Get 30-day trial](https://confluent.cloud) with code: `CONFLUENTDEV1`)
-- Google Cloud account with Gemini API enabled
+- Node.js 18+
+- Confluent Cloud account ([Get trial](https://confluent.cloud) with code: `CONFLUENTDEV1`)
+- Google AI Studio API key
 - TiDB Serverless account
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/izzanoor41/Jback.git
-   cd jback
-   ```
+```bash
+# Clone repository
+git clone https://github.com/yourusername/jback.git
+cd jback
 
-2. **Install dependencies**
-   ```bash
-   npm install --legacy-peer-deps
-   ```
+# Install dependencies
+npm install --legacy-peer-deps
 
-3. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
+# Setup environment
+cp .env.example .env
+# Edit .env with your credentials
 
-4. **Update `.env` with your credentials**
+# Setup database
+npx prisma generate
+npx prisma db push
 
-   | Variable | Description | How to Get |
-   |----------|-------------|------------|
-   | `DATABASE_URL` | TiDB connection string | [TiDB Cloud Console](https://tidbcloud.com) |
-   | `AUTH_SECRET` | NextAuth secret | Run `openssl rand -base64 32` |
-   | `GOOGLE_CLOUD_API_KEY` | Gemini API key | [Google AI Studio](https://aistudio.google.com/apikey) |
-   | `OPENAI_API_KEY` | OpenAI API key (fallback) | [OpenAI Platform](https://platform.openai.com) |
-   | `CONFLUENT_BOOTSTRAP_SERVERS` | Kafka bootstrap servers | Confluent Cloud Dashboard |
-   | `CONFLUENT_API_KEY` | Confluent API key | Confluent Cloud Dashboard |
-   | `CONFLUENT_API_SECRET` | Confluent API secret | Confluent Cloud Dashboard |
-
-5. **Setup database**
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-6. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-7. **Open [http://localhost:3000](http://localhost:3000)**
-
-## 📁 Project Structure
-
-```
-jback/
-├── app/
-│   ├── (app)/                 # Protected dashboard routes
-│   │   ├── dashboard/         # Main dashboard
-│   │   ├── feedback/          # Feedback management
-│   │   ├── analysis/          # AI chat analysis
-│   │   ├── intelligence/      # Confluent intelligence
-│   │   ├── cultural-insights/ # Cultural analysis
-│   │   ├── widgets/           # Widget customization
-│   │   └── integrations/      # Integration options
-│   ├── (auth)/                # Authentication routes
-│   ├── api/                   # API endpoints
-│   │   ├── chat/              # AI chat (Gemini + OpenAI)
-│   │   ├── feedback/          # Feedback CRUD
-│   │   ├── stream/            # Kafka streaming
-│   │   └── streaming-agents/  # Real-time AI agents
-│   └── collect/[id]/          # Public feedback collection
-├── components/
-│   ├── ui/                    # shadcn/ui components
-│   └── landing/               # Landing page components
-├── lib/
-│   ├── ai.ts                  # AI service (Gemini + OpenAI)
-│   ├── ai-analysis.ts         # Feedback analysis
-│   ├── confluent.ts           # Kafka client
-│   └── prisma.ts              # Database client
-├── prisma/
-│   └── schema.prisma          # Database schema
-└── public/
-    └── widgets.js             # Embeddable widget script
+# Run development server
+npm run dev
 ```
 
-## 🔌 Confluent Cloud Integration
+### Environment Variables
 
-Jback uses Confluent Cloud for real-time feedback streaming:
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | TiDB connection string |
+| `AUTH_SECRET` | NextAuth secret (`openssl rand -base64 32`) |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Gemini API key from Google AI Studio |
+| `CONFLUENT_BOOTSTRAP_SERVERS` | Kafka bootstrap servers |
+| `CONFLUENT_API_KEY` | Confluent API key |
+| `CONFLUENT_API_SECRET` | Confluent API secret |
 
-### Topics
-- `feedback-raw` - Incoming feedback from all sources
-- `feedback-analyzed` - AI-processed feedback with cultural insights
-- `feedback-alerts` - Anomaly detection alerts
-
-### Features
-- **Real-time Processing**: Feedback is analyzed instantly as it arrives
-- **Streaming Agents**: AI agents that monitor and react to feedback patterns
-- **Anomaly Detection**: Automatic detection of unusual feedback patterns
-- **Cultural Intelligence**: Real-time cultural context analysis
-
-## 🤖 AI Architecture
+## Architecture
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │  User Feedback  │────▶│  Confluent Cloud │────▶│  Google Gemini  │
-│   (Any Lang)    │     │   (Kafka Stream) │     │  (Primary AI)   │
+│   (100+ langs)  │     │   (Kafka Stream) │     │   (AI Analysis) │
 └─────────────────┘     └──────────────────┘     └────────┬────────┘
                                                           │
                                                           ▼
-                        ┌──────────────────┐     ┌─────────────────┐
-                        │   TiDB Database  │◀────│  OpenAI (Fallback)│
-                        │  (Vector Search) │     └─────────────────┘
-                        └──────────────────┘
+                                                ┌─────────────────┐
+                                                │  TiDB Database  │
+                                                └─────────────────┘
 ```
 
 ### AI Capabilities
-- **Language Detection**: Automatic detection of 100+ languages
-- **Translation**: Accurate translation to English
-- **Sentiment Analysis**: Positive, neutral, negative classification
-- **Cultural Notes**: Communication style and regional context
-- **Actionable Suggestions**: Business recommendations
+- Language detection (100+ languages)
+- Translation to English
+- Sentiment analysis (positive/neutral/negative)
+- Cultural context notes
+- Actionable business suggestions
 
-## 📊 Dashboard Features
+## Widget Integration
 
-### Real-Time Metrics
-- Total feedback count
-- Sentiment distribution
-- Language breakdown
-- Average rating trends
-
-### Cultural Insights
-- Regional communication patterns
-- Cultural context analysis
-- Cross-cultural comparison
-
-### AI Chat
-- Natural language queries about your feedback
-- Real-time data context
-- Powered by Gemini with OpenAI fallback
-
-## 🎨 Widget Integration
-
-### Option 1: Script Embed
 ```html
-<script src="https://jback.vercel.app/widgets.js"></script>
-<script>
-  JbackWidget.init({
-    teamId: 'your-team-id',
-    position: 'bottom-right',
-    primaryColor: '#10B981'
-  });
-</script>
+<script src="https://jback.vercel.app/widgets.js" jback-id="YOUR_TEAM_ID"></script>
 ```
 
-### Option 2: Direct Link
-Share your feedback collection URL directly with customers.
+## Project Structure
 
-### Option 3: QR Code
-Generate a QR code for physical locations.
-
-## 🚀 Deployment
-
-### Deploy to Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/izzanoor41/Jback)
-
-1. Click the button above
-2. Connect your GitHub account
-3. Add environment variables
-4. Deploy!
-
-### Environment Variables for Production
-
-Make sure to set all environment variables in your Vercel project settings.
-
-## 📝 API Reference
-
-### Feedback Collection
 ```
-POST /api/feedback/collect
-Content-Type: application/json
-
-{
-  "teamId": "string",
-  "text": "string",
-  "rating": 1-5,
-  "email": "string (optional)"
-}
+jback/
+├── app/
+│   ├── (app)/           # Dashboard routes
+│   ├── (auth)/          # Auth routes
+│   ├── api/             # API endpoints
+│   └── collect/         # Public feedback form
+├── components/          # UI components
+├── lib/                 # Utilities & services
+└── prisma/              # Database schema
 ```
 
-### AI Chat
-```
-POST /api/chat
-Content-Type: application/json
+## Deployment
 
-{
-  "messages": [{ "role": "user", "content": "string" }],
-  "team": { "id": "string", "name": "string" }
-}
-```
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/jback)
 
-## 🏆 Hackathon Submission
+Set environment variables in Vercel project settings after deployment.
 
-This project is submitted for the **Confluent Challenge** at the Google Cloud x Confluent Hackathon.
+## License
 
-### Challenge Requirements ✅
-- [x] Confluent Cloud integration (Kafka streaming)
-- [x] Google Cloud AI (Gemini 1.5 Flash)
-- [x] Real-time data processing
-- [x] AI/ML predictions (sentiment, cultural analysis)
-- [x] Novel problem solving (cross-cultural feedback intelligence)
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Confluent](https://confluent.io) - Real-time data streaming
-- [Google Cloud](https://cloud.google.com) - AI/ML capabilities
-- [TiDB](https://tidb.io) - Serverless database
-- [Vercel](https://vercel.com) - Deployment platform
-- [shadcn/ui](https://ui.shadcn.com) - UI components
+MIT License
 
 ---
 
 <p align="center">
-  Made with ❤️ for the Confluent + Google Cloud Hackathon
+  Built for the Confluent + Google Cloud Hackathon 2025
 </p>

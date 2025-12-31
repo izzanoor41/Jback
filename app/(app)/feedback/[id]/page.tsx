@@ -184,7 +184,7 @@ export default function Page({ params }: { params: { id: string } }) {
                   Customer Feedback
                 </CardTitle>
                 <div className="flex items-center gap-2">
-                  {feedback.rate && <Rating value={feedback.rate} />}
+                  {feedback.rate !== undefined && feedback.rate !== null && <Rating value={feedback.rate} />}
                   <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
                     feedback.sentiment === "positive" ? "bg-emerald-100 text-emerald-700" :
                     feedback.sentiment === "negative" ? "bg-red-100 text-red-700" :
